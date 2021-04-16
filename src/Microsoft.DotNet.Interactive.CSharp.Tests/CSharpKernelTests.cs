@@ -7,6 +7,8 @@ using Microsoft.DotNet.Interactive.Commands;
 using Microsoft.DotNet.Interactive.Tests;
 using Xunit;
 using Xunit.Abstractions;
+using System;
+using Microsoft.DotNet.Interactive.Events;
 
 namespace Microsoft.DotNet.Interactive.CSharp.Tests
 {
@@ -37,6 +39,19 @@ namespace Microsoft.DotNet.Interactive.CSharp.Tests
 
             variableCountBeforeEvaluation.Should().Be(0);
             variableCountAfterEvaluation.Should().Be(1);
+        }
+
+        [Fact]
+        public async Task Instruction_r_should_not_raise_exceptions()
+        {
+            using var kernel = new CSharpKernel().UseNugetDirective();
+            var rInstruction = new SubmitCode("#r \"nuget:Newtonsoft.Json,13.0.1\"");
+
+            var result = await kernel.SendAsync(rInstruction);
+            result.KernelEvents.Subscribe(eventSub => eventSub.Should().NotBeOfType<CommandFailed>());
+
+            result = await kernel.SendAsync(new SubmitCode("1 + 1"));
+            result.KernelEvents.Subscribe(eventSub => eventSub.Should().NotBeOfType<CommandFailed>());
         }
     }
 }
